@@ -9,7 +9,8 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Build", "Gonzi & Spiikesan", "2.2.0")]
+    [Info("Build", "Gonzi", "2.2.1")]
+    [Description("Build, spawn, plant, upgrade, deploy anything the way that you want it")]
     public class Build : RustPlugin
     {
         #region UI
@@ -335,7 +336,7 @@ namespace Oxide.Plugins
 
             resourcesList.Clear();
 
-            foreach (var str in FileSystemBackend.cache.Keys)
+            foreach (var str in FileSystemBackend.Backend.cache.Keys)
             {
                 if (str.EndsWith(".prefab"))
                 {
