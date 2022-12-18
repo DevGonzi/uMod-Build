@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Build", "Gonzi", "2.2.1")]
+    [Info("Build", "Gonzi", "2.2.3")]
     [Description("Build, spawn, plant, upgrade, deploy anything the way that you want it")]
     public class Build : RustPlugin
     {
@@ -336,7 +336,7 @@ namespace Oxide.Plugins
 
             resourcesList.Clear();
 
-            foreach (var str in FileSystemBackend.Backend.cache.Keys)
+            foreach (var str in FileSystem.Backend.cache.Keys)
             {
                 if (str.EndsWith(".prefab"))
                 {
@@ -1086,6 +1086,11 @@ namespace Oxide.Plugins
 
             if (buildingID > 0)
                 block.AttachToBuilding(buildingID);
+            else
+            {
+                block.buildingID = BuildingManager.server.NewBuildingID();
+                BuildingManager.server.Add(block);
+            }
 
             block.SetGrade(grade);
             block.OwnerID = bp.player.userID;
