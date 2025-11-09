@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Build", "Gonzi", "2.2.3")]
+    [Info("Build", "Gonzi", "2.2.4")]
     [Description("Build, spawn, plant, upgrade, deploy anything the way that you want it")]
     public class Build : RustPlugin
     {
@@ -1212,12 +1212,12 @@ namespace Oxide.Plugins
             {
                 buildingblock.RefreshEntityLinks();
                 buildingblock.UpdateSurroundingEntities();
-                buildingblock.SendNetworkUpdateImmediate(false);
+                buildingblock.SendNetworkUpdateImmediate();
                 buildingblock.ClientRPC(null, "RefreshSkin");
             }
             else
             {
-                baseentity.SendNetworkUpdateImmediate(false);
+                baseentity.SendNetworkUpdateImmediate();
                 baseentity.ClientRPC(null, "RefreshSkin");
             }
         }
