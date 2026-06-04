@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Facepunch;
+using Network;
 using Oxide.Core;
 using Oxide.Game.Rust.Cui;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Build", "Gonzi", "2.2.3")]
+    [Info("Build", "Gonzi", "2.2.4")]
     [Description("Build, spawn, plant, upgrade, deploy anything the way that you want it")]
     public class Build : RustPlugin
     {
@@ -944,7 +945,7 @@ namespace Oxide.Plugins
                     if (current > checkFrom.Count)
                         break;
 
-                    List<BaseEntity> list = Pool.GetList<BaseEntity>();
+                    List<BaseEntity> list = Pool.Get<List<BaseEntity>>();
 
                     Vis.Entities<BaseEntity>(checkFrom[current - 1], 3f, list, constructionColl);
 
@@ -1086,11 +1087,6 @@ namespace Oxide.Plugins
 
             if (buildingID > 0)
                 block.AttachToBuilding(buildingID);
-            else
-            {
-                block.buildingID = BuildingManager.server.NewBuildingID();
-                BuildingManager.server.Add(block);
-            }
 
             block.SetGrade(grade);
             block.OwnerID = bp.player.userID;
@@ -1212,13 +1208,13 @@ namespace Oxide.Plugins
             {
                 buildingblock.RefreshEntityLinks();
                 buildingblock.UpdateSurroundingEntities();
-                buildingblock.SendNetworkUpdateImmediate(false);
-                buildingblock.ClientRPC(null, "RefreshSkin");
+                buildingblock.SendNetworkUpdateImmediate();
+                buildingblock.ClientRPC(RpcTarget.SendInfo("RefreshSkin", new SendInfo(buildingblock.net.group.subscribers)));
             }
             else
             {
-                baseentity.SendNetworkUpdateImmediate(false);
-                baseentity.ClientRPC(null, "RefreshSkin");
+                baseentity.SendNetworkUpdateImmediate();
+                baseentity.ClientRPC(RpcTarget.SendInfo("RefreshSkin", new SendInfo(baseentity.net.group.subscribers)));
             }
         }
 
@@ -1241,13 +1237,13 @@ namespace Oxide.Plugins
 
             PlayerBuild pB = playerBuild[player.userID];
 
-            switch (arg.Args[0])
+            switch (arg.GetString(0))
             {
                 case "build":
                     if (arg.Args.Length > 1)
                     {
                         Building targetBuilding = Building.Foundation;
-                        switch (arg.Args[1])
+                        switch (arg.GetString(1))
                         {
                             case "foundation":
                                 targetBuilding = Building.Foundation;
@@ -1308,9 +1304,9 @@ namespace Oxide.Plugins
                 case "deploy":
                     if (arg.Args.Length > 1)
                     {
-                        if (arg.Args[1] == "page")
+                        if (arg.GetString(1) == "page")
                         {
-                            if (arg.Args[2] == "previous")
+                            if (arg.GetString(2) == "previous")
                             {
                                 pB.deploypage -= 1;
                                 if (pB.deploypage < 0) pB.deploypage = 0;
@@ -1324,9 +1320,9 @@ namespace Oxide.Plugins
                                 }
                             }
                         }
-                        else if (arg.Args[1] == "select")
+                        else if (arg.GetString(1) == "select")
                         {
-                            pB.currentConstruction = PrefabAttribute.server.Find<Construction>(uint.Parse(arg.Args[2]));
+                            pB.currentConstruction = PrefabAttribute.server.Find<Construction>(arg.GetUInt(2));
                         }
                     }
                     else
@@ -1335,9 +1331,9 @@ namespace Oxide.Plugins
                 case "spawn":
                     if (arg.Args.Length > 1)
                     {
-                        if (arg.Args[1] == "page")
+                        if (arg.GetString(1) == "page")
                         {
-                            if (arg.Args[2] == "previous")
+                            if (arg.GetString(2) == "previous")
                             {
                                 pB.spawnpage -= 1;
                                 if (pB.spawnpage < 0) pB.spawnpage = 0;
@@ -1351,7 +1347,7 @@ namespace Oxide.Plugins
                                 }
                             }
                         }
-                        else if (arg.Args[1] == "select")
+                        else if (arg.GetString(1) == "select")
                         {
                             pB.currentSpawn = String.Join(" ", arg.Args.Skip(2));
                         }
@@ -1362,7 +1358,7 @@ namespace Oxide.Plugins
                 case "grade":
                     if (arg.Args.Length > 1)
                     {
-                        pB.grade = (BuildingGrade.Enum)int.Parse(arg.Args[1]);
+                        pB.grade = (BuildingGrade.Enum)arg.GetInt(1);
                     }
                     else
                     {
@@ -1373,7 +1369,7 @@ namespace Oxide.Plugins
                     pB.buildType = PlayerBuildType.Heal;
                     break;
                 case "select":
-                    if (arg.Args[1] == "all")
+                    if (arg.GetString(1) == "all")
                     {
                         pB.select = Selection.All;
                     }
@@ -1383,18 +1379,18 @@ namespace Oxide.Plugins
                     }
                     break;
                 case "height":
-                    if (arg.Args[1] == "reset")
+                    if (arg.GetString(1) == "reset")
                     {
                         pB.height = 0f;
                     }
                     else
                     {
-                        float dif = float.Parse(arg.Args[2]);
-                        if (arg.Args[1] == "plus")
+                        float dif = arg.GetFloat(2);
+                        if (arg.GetString(1) == "plus")
                         {
                             pB.height += dif;
                         }
-                        else if (arg.Args[1] == "minus")
+                        else if (arg.GetString(1) == "minus")
                         {
                             pB.height -= dif;
                         }
@@ -1402,18 +1398,18 @@ namespace Oxide.Plugins
 
                     break;
                 case "rotation":
-                    if (arg.Args[1] == "reset")
+                    if (arg.GetString(1) == "reset")
                     {
                         pB.rotation = 0f;
                     }
                     else
                     {
-                        float dif = float.Parse(arg.Args[2]);
-                        if (arg.Args[1] == "plus")
+                        float dif = arg.GetFloat(2);
+                        if (arg.GetString(1) == "plus")
                         {
                             pB.rotation += dif;
                         }
-                        else if (arg.Args[1] == "minus")
+                        else if (arg.GetString(1) == "minus")
                         {
                             pB.rotation -= dif;
                         }
@@ -1443,7 +1439,7 @@ namespace Oxide.Plugins
                     pB.buildType = PlayerBuildType.Erase;
                     break;
                 case "placement":
-                    pB.placement = arg.Args[1] == "force" ? Placement.Force : arg.Args[1] == "up" ? Placement.Up : Placement.Auto;
+                    pB.placement = arg.GetString(1) == "force" ? Placement.Force : arg.GetString(1) == "up" ? Placement.Up : Placement.Auto;
                     break;
                 case "undo":
                     if (pB.logs.Count == 0)
